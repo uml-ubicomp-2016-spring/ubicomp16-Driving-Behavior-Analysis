@@ -50,7 +50,6 @@ public class ObdGatewayService extends AbstractGatewayService {
 
     }
 
-
     /**
      * Runs the queue until the service is stopped
      */

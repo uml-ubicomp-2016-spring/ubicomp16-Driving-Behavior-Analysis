@@ -13,7 +13,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.GpsStatus;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
@@ -53,7 +55,7 @@ import roboguice.inject.ContentView;
 import roboguice.inject.InjectView;
 
 @ContentView(R.layout.main)
-public class MainActivity extends RoboActivity implements ObdProgressListener {
+public class MainActivity extends RoboActivity implements ObdProgressListener, LocationListener, GpsStatus.Listener {
 
     private static final String TAG = MainActivity.class.getName();
     private static final int NO_BLUETOOTH_ID = 0;
@@ -132,9 +134,14 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
     private final Runnable mQueueCommands = new Runnable() {
         public void run() {
             if (service != null && service.isRunning() && service.queueEmpty()) {
-
+                double lat = 0;
+                double lon = 0;
+                double alt = 0;
                 final int posLen = 7;
                 if (mGpsIsStarted && mLastLocation != null) {
+                    lat = mLastLocation.getLatitude();
+                    lon = mLastLocation.getLongitude();
+                    alt = mLastLocation.getAltitude();
 
                     StringBuilder sb = new StringBuilder();
                     sb.append("Lat: ");
@@ -176,6 +183,9 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
             return super.clone();
         }
 
+        // This method is *only* called when the connection to the service is lost unexpectedly
+        // and *not* when the client unbinds (http://developer.android.com/guide/components/bound-services.html)
+        // So the isServiceBound attribute should also be set to false when we unbind from the service.
         @Override
         public void onServiceDisconnected(ComponentName className) {
             Log.d(TAG, className.toString() + " service is unbound");
@@ -227,6 +237,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
         if (mLocService != null) {
             mLocProvider = mLocService.getProvider(LocationManager.GPS_PROVIDER);
             if (mLocProvider != null) {
+                mLocService.addGpsStatusListener(this);
                 if (mLocService.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     gpsStatusTextView.setText(getString(R.string.status_gps_ready));
                     return true;
@@ -234,6 +245,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
             }
         }
         gpsStatusTextView.setText(getString(R.string.status_gps_no_support));
+        showDialog(NO_GPS_SUPPORT);
         Log.e(TAG, "Unable to get GPS PROVIDER");
         // todo disable gps controls into Preferences
         return false;
@@ -264,6 +276,11 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        if (mLocService != null) {
+            mLocService.removeGpsStatusListener(this);
+            mLocService.removeUpdates(this);
+        }
 
         releaseWakeLockIfHeld();
         if (isServiceBound) {
@@ -350,6 +367,8 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
 
     private void stopLiveData() {
         Log.d(TAG, "Stopping live data..");
+
+        gpsStop();
 
         doUnbindService();
 
@@ -451,6 +470,36 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
         }
     }
 
+    public void onLocationChanged(Location location) {
+        mLastLocation = location;
+    }
+
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    public void onProviderEnabled(String provider) {
+    }
+
+    public void onProviderDisabled(String provider) {
+    }
+
+    public void onGpsStatusChanged(int event) {
+
+        switch (event) {
+            case GpsStatus.GPS_EVENT_STARTED:
+                gpsStatusTextView.setText(getString(R.string.status_gps_started));
+                break;
+            case GpsStatus.GPS_EVENT_STOPPED:
+                gpsStatusTextView.setText(getString(R.string.status_gps_stopped));
+                break;
+            case GpsStatus.GPS_EVENT_FIRST_FIX:
+                gpsStatusTextView.setText(getString(R.string.status_gps_fix));
+                break;
+            case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+                break;
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT) {
@@ -461,6 +510,22 @@ public class MainActivity extends RoboActivity implements ObdProgressListener {
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private synchronized void gpsStart() {
+        if (!mGpsIsStarted && mLocProvider != null && mLocService != null && mLocService.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            mGpsIsStarted = true;
+        } else {
+            gpsStatusTextView.setText(getString(R.string.status_gps_no_support));
+        }
+    }
+
+    private synchronized void gpsStop() {
+        if (mGpsIsStarted) {
+            mLocService.removeUpdates(this);
+            mGpsIsStarted = false;
+            gpsStatusTextView.setText(getString(R.string.status_gps_stopped));
+        }
     }
 
 }
