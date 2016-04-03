@@ -31,6 +31,12 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="edu.uml.cs.obd.driving.io.ObdGatewayService"
+            android:exported="false" />
+        <service
+            android:name="edu.uml.cs.obd.driving.io.MockObdGatewayService"
+            android:exported="false" />
     </application>
 
 </manifest>

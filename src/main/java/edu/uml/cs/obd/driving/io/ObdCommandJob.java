@@ -32,6 +32,26 @@ public class ObdCommandJob {
         _id = id;
     }
 
+    public ObdCommand getCommand() {
+        return _command;
+    }
+
+    /**
+     * @return job current state.
+     */
+    public ObdCommandJobState getState() {
+        return _state;
+    }
+
+    /**
+     * Sets a new job state.
+     *
+     * @param state the new job state.
+     */
+    public void setState(ObdCommandJobState state) {
+        _state = state;
+    }
+
     /**
      * The state of the command.
      */
