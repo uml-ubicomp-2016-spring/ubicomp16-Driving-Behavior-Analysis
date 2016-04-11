@@ -37,6 +37,10 @@
 	$ENGINE_RUNTIME = 22;
 	$FUEL_ECONOMY = 26;
 	
+	//Boundary
+	$AcceMax = 5;
+	$BreakMax = 5;
+	
 	while($data = fgetcsv($file,1000,';'))
 	{
 		if(2 <= $totalCounter)
@@ -55,14 +59,9 @@
 	
 	$totalCounter = $totalCounter - 3; //don't count the title info
 	
-	//Go through the dataf
+	//Go through the dat
 	for($i = 0; $i < $totalCounter; $i++)
-	{
-		//hardBreak detection
-		/*
-			
-		*/
-		
+	{	
 		//full stop detection
 		/*
 			assume when the speed is 0 and previous data's speed is bigger than 0.
@@ -75,6 +74,41 @@
 				$fullStopCounter++;
 				//todo
 			}
+		}
+	}
+	
+	//Go through the dat
+	$flag=3;//0：last time status is increase;1: last time status is decrease; 3: even ; 4:over increase; 5:over decrese
+	for($j = 0; $j < $totalCounter-2; $j++)
+	{
+		//hardBreak and over acceleration detection
+		/*
+			
+		*/
+		//increase
+				if($goods_list[$j][$SPEED]<$goods_list[$j+1][$SPEED])
+		{
+			$flag = 0;
+			if(($goods_list[$j+1][$SPEED]-$goods_list[$j][$SPEED])>$AcceMax && flag!=4)
+			{
+				$flag = 4;
+				$overAccelCounter = $overAccelCounter +1;
+			}
+		}
+		//decrease
+		if($goods_list[$j][$SPEED]>$goods_list[$j+1][$SPEED])
+		{
+			$flag = 1;
+			if(($goods_list[$j][$SPEED]-$goods_list[$j+1][$SPEED])>$BreakMax && flag!=5)
+			{
+				$flag = 5;
+				$hardBreakCounter = $hardBreakCounter +1;
+			}
+		}
+		//even
+		if($goods_list[$j][$SPEED]==$goods_list[$j+1][$SPEED])
+		{
+			$flag = 3;
 		}
 	}
 ?>
@@ -134,6 +168,8 @@
 			echo "Driving duration: ". $goods_list[$totalCounter-1][$ENGINE_RUNTIME]."<br>";
 			echo "Max Speed: ".$max_speed."mph<br>";
 			echo "full stop count: ".$fullStopCounter."<br>";
+			echo "Hard break count: ".$hardBreakCounter."<br>";
+			echo "Over acceleration count: ".$overAccelCounter."<br>";
 		?>
 		</div>
     </body>
