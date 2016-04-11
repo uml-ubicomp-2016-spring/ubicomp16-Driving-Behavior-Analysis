@@ -75,6 +75,74 @@ public class ConfigActivity extends PreferenceActivity implements OnPreferenceCh
     }
 
     /**
+     * @param prefs
+     * @return
+     */
+    public static double getVolumetricEfficieny(SharedPreferences prefs) {
+        String veString = prefs.getString(ConfigActivity.VOLUMETRIC_EFFICIENCY_KEY, ".85");
+        double ve = 0.85;
+        try {
+            ve = Double.parseDouble(veString);
+        } catch (Exception e) {
+        }
+        return ve;
+    }
+
+    /**
+     * @param prefs
+     * @return
+     */
+    public static double getEngineDisplacement(SharedPreferences prefs) {
+        String edString = prefs.getString(ConfigActivity.ENGINE_DISPLACEMENT_KEY, "1.6");
+        double ed = 1.6;
+        try {
+            ed = Double.parseDouble(edString);
+        } catch (Exception e) {
+        }
+        return ed;
+    }
+
+    /**
+     * @param prefs
+     * @return
+     */
+    public static ArrayList<ObdCommand> getObdCommands(SharedPreferences prefs) {
+        ArrayList<ObdCommand> cmds = ObdConfig.getCommands();
+        ArrayList<ObdCommand> ucmds = new ArrayList<>();
+        for (int i = 0; i < cmds.size(); i++) {
+            ObdCommand cmd = cmds.get(i);
+            boolean selected = prefs.getBoolean(cmd.getName(), true);
+            if (selected)
+                ucmds.add(cmd);
+        }
+        return ucmds;
+    }
+
+    /**
+     * @param prefs
+     * @return
+     */
+    public static double getMaxFuelEconomy(SharedPreferences prefs) {
+        String maxStr = prefs.getString(ConfigActivity.MAX_FUEL_ECON_KEY, "70");
+        double max = 70;
+        try {
+            max = Double.parseDouble(maxStr);
+        } catch (Exception e) {
+        }
+        return max;
+    }
+
+    /**
+     * @param prefs
+     * @return
+     */
+    public static String[] getReaderConfigCommands(SharedPreferences prefs) {
+        String cmdsStr = prefs.getString(CONFIG_READER_KEY, "atsp0\natz");
+        String[] cmds = cmdsStr.split("\n");
+        return cmds;
+    }
+
+    /**
      * Minimum time between location updates, in milliseconds
      *
      * @param prefs

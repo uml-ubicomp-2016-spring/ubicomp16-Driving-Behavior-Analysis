@@ -33,6 +33,13 @@
         <activity
             android:name="edu.uml.cs.obd.driving.activity.ConfigActivity"
             android:label="@string/app_name"></activity>
+        <activity
+            android:name="edu.uml.cs.obd.driving.activity.TroubleCodesActivity"
+            android:label="@string/title_activity_trouble_codes"></activity>
+
+        <activity
+            android:name="edu.uml.cs.obd.driving.activity.TripListActivity"
+            android:label="@string/title_activity_trips_list"></activity>
 
         <service
             android:name="edu.uml.cs.obd.driving.io.ObdGatewayService"

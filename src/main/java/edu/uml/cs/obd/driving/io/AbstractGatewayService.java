@@ -1,5 +1,6 @@
 package edu.uml.cs.obd.driving.io;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -95,6 +96,23 @@ public abstract class AbstractGatewayService extends RoboService {
      */
     protected void showNotification(String contentTitle, String contentText, int icon, boolean ongoing, boolean notify, boolean vibrate) {
         final PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0, new Intent(ctx, MainActivity.class), 0);
+        final Notification.Builder notificationBuilder = new Notification.Builder(ctx);
+        //final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(ctx);
+        notificationBuilder.setContentTitle(contentTitle)
+                .setContentText(contentText).setSmallIcon(icon)
+                .setContentIntent(contentIntent)
+                .setWhen(System.currentTimeMillis());
+        if (ongoing) {
+            notificationBuilder.setOngoing(true);
+        } else {
+            notificationBuilder.setAutoCancel(true);
+        }
+        if (vibrate) {
+            notificationBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
+        }
+        if (notify) {
+            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.getNotification());
+        }
     }
 
     public void setContext(Context c) {

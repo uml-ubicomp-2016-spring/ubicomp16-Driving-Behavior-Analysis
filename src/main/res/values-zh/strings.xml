@@ -56,11 +56,11 @@
     <string name="status_obd_no_support">NA</string>
     <!-- preferences setting strings-->
     <!-- upload_category-->
-    <string name="pref_upload_title">数据下载</string>
-    <string name="pref_upload_summaryOff">打开网络数据下载</string>
-    <string name="pref_upload_summaryOn">关闭网络数据下载</string>
-    <string name="pref_upload_url_title">下载链接</string>
-    <string name="pref_upload_url_summary">用于接收更新的数据</string>
+    <string name="pref_upload_title">数据上传</string>
+    <string name="pref_upload_summaryOff">打开数据上传</string>
+    <string name="pref_upload_summaryOn">关闭数据上传</string>
+    <string name="pref_upload_url_title">服务器上传链接</string>
+    <string name="pref_upload_url_summary">用于接收实时数据的URL</string>
     <string name="pref_vehicle_id_title">设备 ID</string>
     <string name="pref_vehicle_id_summary">用于上传数据的唯一设备id</string>
     <!--Bluetooth-->

@@ -19,6 +19,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -37,21 +38,35 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.pires.obd.commands.ObdCommand;
+import com.github.pires.obd.commands.SpeedCommand;
+import com.github.pires.obd.commands.engine.RPMCommand;
+import com.github.pires.obd.commands.engine.RuntimeCommand;
 import com.github.pires.obd.enums.AvailableCommandNames;
 import edu.uml.cs.obd.driving.R;
 import edu.uml.cs.obd.driving.config.ObdConfig;
 import edu.uml.cs.obd.driving.io.AbstractGatewayService;
+import edu.uml.cs.obd.driving.io.LogCSVWriter;
 import edu.uml.cs.obd.driving.io.MockObdGatewayService;
 import edu.uml.cs.obd.driving.io.ObdCommandJob;
 import edu.uml.cs.obd.driving.io.ObdGatewayService;
 import edu.uml.cs.obd.driving.io.ObdProgressListener;
+import edu.uml.cs.obd.driving.net.ObdReading;
+import edu.uml.cs.obd.driving.net.ObdService;
+import edu.uml.cs.obd.driving.trips.TripLog;
+import edu.uml.cs.obd.driving.trips.TripRecord;
 import com.google.inject.Inject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 import roboguice.RoboGuice;
 import roboguice.activity.RoboActivity;
 import roboguice.inject.ContentView;
@@ -86,7 +101,11 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     boolean mGpsIsStarted = false;
     private LocationManager mLocService;
     private LocationProvider mLocProvider;
+    private LogCSVWriter myCSVWriter;
     private Location mLastLocation;
+    /// the trip log
+    private TripLog triplog;
+    private TripRecord currentTrip;
 
     @InjectView(R.id.compass_text)
     private TextView compass;
@@ -165,12 +184,16 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                     final String vin = prefs.getString(ConfigActivity.VEHICLE_ID_KEY, "UNDEFINED_VIN");
                     Map<String, String> temp = new HashMap<String, String>();
                     temp.putAll(commandResult);
+                    ObdReading reading = new ObdReading(lat, lon, alt, System.currentTimeMillis(), vin, temp);
+                    new UploadAsyncTask().execute(reading);
 
                 } else if (prefs.getBoolean(ConfigActivity.ENABLE_FULL_LOGGING_KEY, false)) {
                     // Write the current reading to CSV
                     final String vin = prefs.getString(ConfigActivity.VEHICLE_ID_KEY, "UNDEFINED_VIN");
                     Map<String, String> temp = new HashMap<String, String>();
                     temp.putAll(commandResult);
+                    ObdReading reading = new ObdReading(lat, lon, alt, System.currentTimeMillis(), vin, temp);
+                    myCSVWriter.writeLineCSV(reading);
                 }
                 commandResult.clear();
             }
@@ -252,6 +275,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
             existingTV.setText(cmdResult);
         } else addTableRow(cmdID, cmdName, cmdResult);
         commandResult.put(cmdID, cmdResult);
+        updateTripStatistic(job, cmdID);
     }
 
     private boolean gpsInit() {
@@ -273,6 +297,22 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         return false;
     }
 
+    private void updateTripStatistic(final ObdCommandJob job, final String cmdID) {
+
+        if (currentTrip != null) {
+            if (cmdID.equals(AvailableCommandNames.SPEED.toString())) {
+                SpeedCommand command = (SpeedCommand) job.getCommand();
+                currentTrip.setSpeedMax(command.getMetricSpeed());
+            } else if (cmdID.equals(AvailableCommandNames.ENGINE_RPM.toString())) {
+                RPMCommand command = (RPMCommand) job.getCommand();
+                currentTrip.setEngineRpmMax(command.getRPM());
+            } else if (cmdID.endsWith(AvailableCommandNames.ENGINE_RUNTIME.toString())) {
+                RuntimeCommand command = (RuntimeCommand) job.getCommand();
+                currentTrip.setEngineRuntime(command.getFormattedResult());
+            }
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -287,6 +327,9 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
             orientSensor = sensors.get(0);
         else
             showDialog(NO_ORIENTATION_SENSOR);
+
+        // create a log instance for use by this application
+        triplog = TripLog.getInstance(this.getApplicationContext());
     }
 
     @Override
@@ -308,6 +351,8 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         if (isServiceBound) {
             doUnbindService();
         }
+
+        endTrip();
 
         final BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter != null && btAdapter.isEnabled() && !bluetoothDefaultIsEnable)
@@ -381,17 +426,28 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                 updateConfig();
                 return true;
             case GET_DTC:
+                getTroubleCodes();
+                return true;
+            case TRIPS_LIST:
+                startActivity(new Intent(this, TripListActivity.class));
                 return true;
         }
         return false;
     }
 
+    private void getTroubleCodes() {
+        startActivity(new Intent(this, TroubleCodesActivity.class));
+    }
 
     private void startLiveData() {
         Log.d(TAG, "Starting live data..");
 
         tl.removeAllViews(); //start fresh
         doBindService();
+
+        currentTrip = triplog.startTrip();
+        if (currentTrip == null)
+            showDialog(SAVE_TRIP_NOT_AVAILABLE);
 
         // start command execution
         new Handler().post(mQueueCommands);
@@ -403,6 +459,22 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
         // screen won't turn off until wakeLock.release()
         wakeLock.acquire();
+
+        if (prefs.getBoolean(ConfigActivity.ENABLE_FULL_LOGGING_KEY, false)) {
+
+            // Create the CSV Logger
+            long mils = System.currentTimeMillis();
+            SimpleDateFormat sdf = new SimpleDateFormat("_dd_MM_yyyy_HH_mm_ss");
+
+            try {
+                myCSVWriter = new LogCSVWriter("Log" + sdf.format(new Date(mils)).toString() + ".csv",
+                        prefs.getString(ConfigActivity.DIRECTORY_FULL_LOGGING_KEY,
+                                getString(R.string.default_dirname_full_logging))
+                );
+            } catch (FileNotFoundException | RuntimeException e) {
+                Log.e(TAG, "Can't enable logging to file.", e);
+            }
+        }
     }
 
     private void stopLiveData() {
@@ -411,6 +483,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         gpsStop();
 
         doUnbindService();
+        endTrip();
 
         releaseWakeLockIfHeld();
 
@@ -433,6 +506,17 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("Where there issues?\nThen please send us the logs.\nSend Logs?").setPositiveButton("Yes", dialogClickListener)
                     .setNegativeButton("No", dialogClickListener).show();
+        }
+
+        if (myCSVWriter != null) {
+            myCSVWriter.closeLogCSVWriter();
+        }
+    }
+
+    protected void endTrip() {
+        if (currentTrip != null) {
+            currentTrip.setEndDate(new Date());
+            triplog.updateRecord(currentTrip);
         }
     }
 
@@ -601,4 +685,33 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         }
     }
 
+    /**
+     * Uploading asynchronous task
+     */
+    private class UploadAsyncTask extends AsyncTask<ObdReading, Void, Void> {
+
+        @Override
+        protected Void doInBackground(ObdReading... readings) {
+            Log.d(TAG, "Uploading " + readings.length + " readings..");
+            // instantiate reading service client
+            final String endpoint = prefs.getString(ConfigActivity.UPLOAD_URL_KEY, "");
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(endpoint)
+                    .build();
+            ObdService service = restAdapter.create(ObdService.class);
+            // upload readings
+            for (ObdReading reading : readings) {
+                try {
+                    Response response = service.uploadReading(reading);
+                    assert response.getStatus() == 200;
+                } catch (RetrofitError re) {
+                    Log.e(TAG, re.toString());
+                }
+
+            }
+            Log.d(TAG, "Done");
+            return null;
+        }
+
+    }
 }

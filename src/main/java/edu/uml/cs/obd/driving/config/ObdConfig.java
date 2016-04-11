@@ -32,9 +32,6 @@ import com.github.pires.obd.enums.FuelTrim;
 
 import java.util.ArrayList;
 
-/**
- * TODO put description
- */
 public final class ObdConfig {
 
     public static ArrayList<ObdCommand> getCommands() {
