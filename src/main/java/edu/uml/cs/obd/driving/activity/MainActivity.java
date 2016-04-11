@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -35,8 +36,10 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.pires.obd.commands.ObdCommand;
 import com.github.pires.obd.enums.AvailableCommandNames;
 import edu.uml.cs.obd.driving.R;
+import edu.uml.cs.obd.driving.config.ObdConfig;
 import edu.uml.cs.obd.driving.io.AbstractGatewayService;
 import edu.uml.cs.obd.driving.io.MockObdGatewayService;
 import edu.uml.cs.obd.driving.io.ObdCommandJob;
@@ -53,6 +56,9 @@ import roboguice.RoboGuice;
 import roboguice.activity.RoboActivity;
 import roboguice.inject.ContentView;
 import roboguice.inject.InjectView;
+
+import static edu.uml.cs.obd.driving.activity.ConfigActivity.getGpsDistanceUpdatePeriod;
+import static edu.uml.cs.obd.driving.activity.ConfigActivity.getGpsUpdatePeriod;
 
 @ContentView(R.layout.main)
 public class MainActivity extends RoboActivity implements ObdProgressListener, LocationListener, GpsStatus.Listener {
@@ -134,6 +140,8 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     private final Runnable mQueueCommands = new Runnable() {
         public void run() {
             if (service != null && service.isRunning() && service.queueEmpty()) {
+                queueCommands();
+
                 double lat = 0;
                 double lon = 0;
                 double alt = 0;
@@ -152,8 +160,22 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                     sb.append(String.valueOf(mLastLocation.getAltitude()));
                     gpsStatusTextView.setText(sb.toString());
                 }
+                if (prefs.getBoolean(ConfigActivity.UPLOAD_DATA_KEY, false)) {
+                    // Upload the current reading by http
+                    final String vin = prefs.getString(ConfigActivity.VEHICLE_ID_KEY, "UNDEFINED_VIN");
+                    Map<String, String> temp = new HashMap<String, String>();
+                    temp.putAll(commandResult);
+
+                } else if (prefs.getBoolean(ConfigActivity.ENABLE_FULL_LOGGING_KEY, false)) {
+                    // Write the current reading to CSV
+                    final String vin = prefs.getString(ConfigActivity.VEHICLE_ID_KEY, "UNDEFINED_VIN");
+                    Map<String, String> temp = new HashMap<String, String>();
+                    temp.putAll(commandResult);
+                }
                 commandResult.clear();
             }
+            // run again in period defined in preferences
+            new Handler().postDelayed(mQueueCommands, ConfigActivity.getObdUpdatePeriod(prefs));
         }
     };
     private Sensor orientSensor = null;
@@ -319,6 +341,10 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         final BluetoothAdapter btAdapter = BluetoothAdapter
                 .getDefaultAdapter();
 
+        preRequisites = btAdapter != null && btAdapter.isEnabled();
+        if (!preRequisites && prefs.getBoolean(ConfigActivity.ENABLE_BT_KEY, false)) {
+            preRequisites = btAdapter != null && btAdapter.enable();
+        }
 
         gpsInit();
 
@@ -328,6 +354,10 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         } else {
             btStatusTextView.setText(getString(R.string.status_bluetooth_ok));
         }
+    }
+
+    private void updateConfig() {
+        startActivity(new Intent(this, ConfigActivity.class));
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -347,6 +377,11 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
             case STOP_LIVE_DATA:
                 stopLiveData();
                 return true;
+            case SETTINGS:
+                updateConfig();
+                return true;
+            case GET_DTC:
+                return true;
         }
         return false;
     }
@@ -361,6 +396,11 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         // start command execution
         new Handler().post(mQueueCommands);
 
+        if (prefs.getBoolean(ConfigActivity.ENABLE_GPS_KEY, false))
+            gpsStart();
+        else
+            gpsStatusTextView.setText(getString(R.string.status_gps_not_used));
+
         // screen won't turn off until wakeLock.release()
         wakeLock.acquire();
     }
@@ -374,6 +414,26 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
         releaseWakeLockIfHeld();
 
+        final String devemail = prefs.getString(ConfigActivity.DEV_EMAIL_KEY, null);
+        if (devemail != null) {
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which) {
+                        case DialogInterface.BUTTON_POSITIVE:
+                            ObdGatewayService.saveLogcatToFile(getApplicationContext(), devemail);
+                            break;
+
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //No button clicked
+                            break;
+                    }
+                }
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Where there issues?\nThen please send us the logs.\nSend Logs?").setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener).show();
+        }
     }
 
     protected Dialog onCreateDialog(int id) {
@@ -439,6 +499,18 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         tr.addView(name);
         tr.addView(value);
         tl.addView(tr, params);
+    }
+
+    /**
+     *
+     */
+    private void queueCommands() {
+        if (isServiceBound) {
+            for (ObdCommand Command : ObdConfig.getCommands()) {
+                if (prefs.getBoolean(Command.getName(), true))
+                    service.queueJob(new ObdCommandJob(Command));
+            }
+        }
     }
 
     private void doBindService() {
@@ -514,6 +586,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
     private synchronized void gpsStart() {
         if (!mGpsIsStarted && mLocProvider != null && mLocService != null && mLocService.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            mLocService.requestLocationUpdates(mLocProvider.getName(), getGpsUpdatePeriod(prefs), getGpsDistanceUpdatePeriod(prefs), this);
             mGpsIsStarted = true;
         } else {
             gpsStatusTextView.setText(getString(R.string.status_gps_no_support));

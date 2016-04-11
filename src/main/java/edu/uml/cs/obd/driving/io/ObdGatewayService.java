@@ -1,5 +1,6 @@
 package edu.uml.cs.obd.driving.io;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
@@ -9,8 +10,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.github.pires.obd.commands.protocol.EchoOffCommand;
+import com.github.pires.obd.commands.protocol.LineFeedOffCommand;
+import com.github.pires.obd.commands.protocol.ObdResetCommand;
+import com.github.pires.obd.commands.protocol.SelectProtocolCommand;
+import com.github.pires.obd.commands.protocol.TimeoutCommand;
+import com.github.pires.obd.commands.temperature.AmbientAirTemperatureCommand;
+import com.github.pires.obd.enums.ObdProtocols;
 import com.github.pires.obd.exceptions.UnsupportedCommandException;
+import edu.uml.cs.obd.driving.R;
+import edu.uml.cs.obd.driving.activity.ConfigActivity;
 import edu.uml.cs.obd.driving.activity.MainActivity;
 import edu.uml.cs.obd.driving.io.ObdCommandJob.ObdCommandJobState;
 import com.google.inject.Inject;
@@ -36,7 +47,59 @@ public class ObdGatewayService extends AbstractGatewayService {
     private BluetoothSocket sock = null;
 
     public void startService() throws IOException {
+        Log.d(TAG, "Starting service..");
 
+        // get the remote Bluetooth device
+        final String remoteDevice = prefs.getString(ConfigActivity.BLUETOOTH_LIST_KEY, null);
+        if (remoteDevice == null || "".equals(remoteDevice)) {
+            Toast.makeText(ctx, getString(R.string.text_bluetooth_nodevice), Toast.LENGTH_LONG).show();
+
+            // log error
+            Log.e(TAG, "No Bluetooth device has been selected.");
+
+            // TODO kill this service gracefully
+            stopService();
+            throw new IOException();
+        } else {
+
+            final BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+            dev = btAdapter.getRemoteDevice(remoteDevice);
+
+
+    /*
+     * Establish Bluetooth connection
+     *
+     * Because discovery is a heavyweight procedure for the Bluetooth adapter,
+     * this method should always be called before attempting to connect to a
+     * remote device with connect(). Discovery is not managed by the Activity,
+     * but is run as a system service, so an application should always call
+     * cancel discovery even if it did not directly request a discovery, just to
+     * be sure. If Bluetooth state is not STATE_ON, this API will return false.
+     *
+     * see
+     * http://developer.android.com/reference/android/bluetooth/BluetoothAdapter
+     * .html#cancelDiscovery()
+     */
+            Log.d(TAG, "Stopping Bluetooth discovery.");
+            btAdapter.cancelDiscovery();
+
+            showNotification(getString(R.string.notification_action), getString(R.string.service_starting), R.drawable.ic_btcar, true, true, false);
+
+            try {
+                startObdConnection();
+            } catch (Exception e) {
+                Log.e(
+                        TAG,
+                        "There was an error while establishing connection. -> "
+                                + e.getMessage()
+                );
+
+                // in case of failure, stop this service.
+                stopService();
+                throw new IOException();
+            }
+            showNotification(getString(R.string.notification_action), getString(R.string.service_started), R.drawable.ic_btcar, true, true, false);
+        }
     }
 
     /**
@@ -47,7 +110,57 @@ public class ObdGatewayService extends AbstractGatewayService {
      * @throws IOException
      */
     private void startObdConnection() throws IOException {
+        Log.d(TAG, "Starting OBD connection..");
+        isRunning = true;
+        try {
+            sock = BluetoothManager.connect(dev);
+        } catch (Exception e2) {
+            Log.e(TAG, "There was an error while establishing Bluetooth connection. Stopping app..", e2);
+            stopService();
+            throw new IOException();
+        }
 
+        // Let's configure the connection.
+        Log.d(TAG, "Queueing jobs for connection configuration..");
+        queueJob(new ObdCommandJob(new ObdResetCommand()));
+        queueJob(new ObdCommandJob(new EchoOffCommand()));
+
+    /*
+     * Will send second-time based on tests.
+     *
+     * TODO this can be done w/o having to queue jobs by just issuing
+     * command.run(), command.getResult() and validate the result.
+     */
+        queueJob(new ObdCommandJob(new EchoOffCommand()));
+        queueJob(new ObdCommandJob(new LineFeedOffCommand()));
+        queueJob(new ObdCommandJob(new TimeoutCommand(62)));
+
+        // Get protocol from preferences
+        final String protocol = prefs.getString(ConfigActivity.PROTOCOLS_LIST_KEY, "AUTO");
+        queueJob(new ObdCommandJob(new SelectProtocolCommand(ObdProtocols.valueOf(protocol))));
+
+        // Job for returning dummy data
+        queueJob(new ObdCommandJob(new AmbientAirTemperatureCommand()));
+
+        queueCounter = 0L;
+        Log.d(TAG, "Initialization jobs queued.");
+
+
+    }
+
+    /**
+     * This method will add a job to the queue while setting its ID to the
+     * internal queue counter.
+     *
+     * @param job the job to queue.
+     */
+    @Override
+    public void queueJob(ObdCommandJob job) {
+        // This is a good place to enforce the imperial units option
+        job.getCommand().useImperialUnits(prefs.getBoolean(ConfigActivity.IMPERIAL_UNITS_KEY, false));
+
+        // Now we can pass it along
+        super.queueJob(job);
     }
 
     /**
@@ -126,6 +239,41 @@ public class ObdGatewayService extends AbstractGatewayService {
 
     public boolean isRunning() {
         return isRunning;
+    }
+
+    public static void saveLogcatToFile(Context context, String devemail) {
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        emailIntent.setType("text/plain");
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{devemail});
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "OBD2 Reader Debug Logs");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nManufacturer: ").append(Build.MANUFACTURER);
+        sb.append("\nModel: ").append(Build.MODEL);
+        sb.append("\nRelease: ").append(Build.VERSION.RELEASE);
+
+        emailIntent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+
+        String fileName = "OBDReader_logcat_" + System.currentTimeMillis() + ".txt";
+        File sdCard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdCard.getAbsolutePath() + File.separator + "OBD2Logs");
+        if (dir.mkdirs()) {
+            File outputFile = new File(dir, fileName);
+            Uri uri = Uri.fromFile(outputFile);
+            emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
+
+            Log.d("savingFile", "Going to save logcat to " + outputFile);
+            //emailIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(Intent.createChooser(emailIntent, "Pick an Email provider").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
+            try {
+                @SuppressWarnings("unused")
+                Process process = Runtime.getRuntime().exec("logcat -f " + outputFile.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

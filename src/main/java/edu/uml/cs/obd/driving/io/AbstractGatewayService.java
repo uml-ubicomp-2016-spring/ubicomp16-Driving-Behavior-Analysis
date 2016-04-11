@@ -1,12 +1,14 @@
 package edu.uml.cs.obd.driving.io;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import edu.uml.cs.obd.driving.activity.MainActivity;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -86,6 +88,13 @@ public abstract class AbstractGatewayService extends RoboService {
             job.setState(ObdCommandJob.ObdCommandJobState.QUEUE_ERROR);
             Log.e(TAG, "Failed to queue job.");
         }
+    }
+
+    /**
+     * Show a notification while this service is running.
+     */
+    protected void showNotification(String contentTitle, String contentText, int icon, boolean ongoing, boolean notify, boolean vibrate) {
+        final PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0, new Intent(ctx, MainActivity.class), 0);
     }
 
     public void setContext(Context c) {
