@@ -22,6 +22,8 @@ Build LAMP server environment
 Build upload function for the android app
 Build read function to read the csv files
 Integrate the Google map rout API into the system
-Some basic analyse functions
+Build Some basic analyse functions
 Build full-stop analyse function
 Build over-acceleration analyse function
+Mark full stop point on the rout
+
