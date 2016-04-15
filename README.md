@@ -9,7 +9,7 @@ This system will collect data from vehicle and human’s behaviors by using OBD2
 # Progress (Week 3/28)
 Add weekly progress here
 
-Build android app:
+Android app part:
 Build bluetooth connection with the OBDII
 Read OBD data
 Integrate the GPS function into the system
@@ -17,7 +17,7 @@ Build upload funtion to upload the log file to the server
 Debug the app(log file and aupload issue)
 
 
-Server:
+Server part:
 Build LAMP server environment
 Build upload function for the android app
 Build read function to read the csv files
@@ -26,4 +26,5 @@ Build Some basic analyse functions
 Build full-stop analyse function
 Build over-acceleration analyse function
 Mark full stop point on the rout
+Add filter function
 
