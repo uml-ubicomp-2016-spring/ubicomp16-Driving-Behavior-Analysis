@@ -33,6 +33,7 @@ public class LogCSVWriter {
             "TROUBLE_CODES", "TIMING_ADVANCE", "EQUIV_RATIO"};
     private boolean isFirstLine;
     private BufferedWriter buf;
+    public static File CSVFile = null;
 
     public LogCSVWriter(String filename, String dirname) throws FileNotFoundException, RuntimeException {
 
@@ -46,10 +47,11 @@ public class LogCSVWriter {
             this.buf = new BufferedWriter(osw);
             this.isFirstLine = true;
             Log.d(TAG, "Constructed the LogCSVWriter");
+            // TODO: 4/18/16
+            this.CSVFile = file;
         } else {
             throw new RuntimeException("Can't create LogCSVWriter directories.");
         }
-
     }
 
     public void closeLogCSVWriter() {

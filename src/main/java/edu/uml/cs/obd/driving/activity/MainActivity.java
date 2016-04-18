@@ -45,6 +45,7 @@ import com.github.pires.obd.enums.AvailableCommandNames;
 import edu.uml.cs.obd.driving.R;
 import edu.uml.cs.obd.driving.config.ObdConfig;
 import edu.uml.cs.obd.driving.io.AbstractGatewayService;
+import edu.uml.cs.obd.driving.io.FileUploadUtil;
 import edu.uml.cs.obd.driving.io.LogCSVWriter;
 import edu.uml.cs.obd.driving.io.MockObdGatewayService;
 import edu.uml.cs.obd.driving.io.ObdCommandJob;
@@ -56,6 +57,7 @@ import edu.uml.cs.obd.driving.trips.TripLog;
 import edu.uml.cs.obd.driving.trips.TripRecord;
 import com.google.inject.Inject;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -93,6 +95,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     private static final int SAVE_TRIP_NOT_AVAILABLE = 11;
     private static final int REQUEST_ENABLE_BT = 1234;
     private static boolean bluetoothDefaultIsEnable = false;
+    private File CSVFile = null;
 
     static {
         RoboGuice.setUseAnnotationDatabases(false);
@@ -407,13 +410,42 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     }
 
     private void uploadData() {
-        // TODO: 4/18/16 get log file  
-        
-        Context context = getApplicationContext();
-        String msg = "Data file uploaded.";
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, msg, duration);
-        toast.show();
+
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                Context context = getApplicationContext();
+                int duration = Toast.LENGTH_LONG;
+
+                switch (which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        if (CSVFile.exists()) {
+                            // upload file
+                            String serverUrl = prefs.getString(ConfigActivity.UPLOAD_URL_KEY, null);
+                            String rst = FileUploadUtil.uploadFile(CSVFile, serverUrl);
+                            // show result
+                            // TODO: 4/18/16 need to test.
+                            String msg = CSVFile + "has been uploaded." + rst;
+                            Toast toast = Toast.makeText(context, msg, duration);
+                            toast.show();
+                        } else {
+                            String msg = "No file to upload.";
+                            Toast toast = Toast.makeText(context, msg, duration);
+                            toast.show();
+                        }
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Do you want to upload log file to the server ?").setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -498,7 +530,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         // screen won't turn off until wakeLock.release()
         wakeLock.acquire();
 
-        if (prefs.getBoolean(ConfigActivity.ENABLE_FULL_LOGGING_KEY, false)) {
+        if (prefs.getBoolean(ConfigActivity.ENABLE_FULL_LOGGING_KEY, true)) {
 
             // Create the CSV Logger
             long mils = System.currentTimeMillis();
@@ -509,6 +541,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                         prefs.getString(ConfigActivity.DIRECTORY_FULL_LOGGING_KEY,
                                 getString(R.string.default_dirname_full_logging))
                 );
+                this.CSVFile = myCSVWriter.CSVFile;
             } catch (FileNotFoundException | RuntimeException e) {
                 Log.e(TAG, "Can't enable logging to file.", e);
             }
@@ -548,6 +581,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
         if (myCSVWriter != null) {
             myCSVWriter.closeLogCSVWriter();
+            //this.CSVFilePath = myCSVWriter.CSVFilePath;
         }
     }
 
