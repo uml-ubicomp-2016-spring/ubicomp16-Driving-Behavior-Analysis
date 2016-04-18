@@ -85,6 +85,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     private static final int STOP_LIVE_DATA = 3;
     private static final int SETTINGS = 4;
     private static final int GET_DTC = 5;
+    private static final int UPLOAD_DATA = 6;
     private static final int TABLE_ROW_MARGIN = 7;
     private static final int NO_ORIENTATION_SENSOR = 8;
     private static final int NO_GPS_SUPPORT = 9;
@@ -405,12 +406,23 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
         startActivity(new Intent(this, ConfigActivity.class));
     }
 
+    private void uploadData() {
+        // TODO: 4/18/16 get log file  
+        
+        Context context = getApplicationContext();
+        String msg = "Data file uploaded.";
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, msg, duration);
+        toast.show();
+    }
+
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, START_LIVE_DATA, 0, getString(R.string.menu_start_live_data));
         menu.add(0, STOP_LIVE_DATA, 0, getString(R.string.menu_stop_live_data));
-        menu.add(0, GET_DTC, 0, getString(R.string.menu_get_dtc));
-        menu.add(0, TRIPS_LIST, 0, getString(R.string.menu_trip_list));
+        //menu.add(0, GET_DTC, 0, getString(R.string.menu_get_dtc));
+        //menu.add(0, TRIPS_LIST, 0, getString(R.string.menu_trip_list));
         menu.add(0, SETTINGS, 0, getString(R.string.menu_settings));
+        menu.add(0, UPLOAD_DATA, 0, getString(R.string.menu_upload_data));
         return true;
     }
 
@@ -430,9 +442,35 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                 return true;
             case TRIPS_LIST:
                 startActivity(new Intent(this, TripListActivity.class));
+            case UPLOAD_DATA:
+                uploadData();
                 return true;
         }
         return false;
+    }
+
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem startItem = menu.findItem(START_LIVE_DATA);
+        MenuItem stopItem = menu.findItem(STOP_LIVE_DATA);
+        MenuItem settingsItem = menu.findItem(SETTINGS);
+        //MenuItem getDTCItem = menu.findItem(GET_DTC);
+        MenuItem uploadData = menu.findItem(UPLOAD_DATA);
+
+        if (service != null && service.isRunning()) {
+            //getDTCItem.setEnabled(false);
+            startItem.setEnabled(false);
+            stopItem.setEnabled(true);
+            settingsItem.setEnabled(false);
+            uploadData.setEnabled(false);
+        } else {
+            //getDTCItem.setEnabled(true);
+            stopItem.setEnabled(false);
+            startItem.setEnabled(true);
+            settingsItem.setEnabled(true);
+            uploadData.setEnabled(true);
+        }
+
+        return true;
     }
 
     private void getTroubleCodes() {
@@ -487,26 +525,26 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
         releaseWakeLockIfHeld();
 
-        final String devemail = prefs.getString(ConfigActivity.DEV_EMAIL_KEY, null);
-        if (devemail != null) {
-            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which) {
-                        case DialogInterface.BUTTON_POSITIVE:
-                            ObdGatewayService.saveLogcatToFile(getApplicationContext(), devemail);
-                            break;
-
-                        case DialogInterface.BUTTON_NEGATIVE:
-                            //No button clicked
-                            break;
-                    }
-                }
-            };
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Where there issues?\nThen please send us the logs.\nSend Logs?").setPositiveButton("Yes", dialogClickListener)
-                    .setNegativeButton("No", dialogClickListener).show();
-        }
+//        final String devemail = prefs.getString(ConfigActivity.DEV_EMAIL_KEY, null);
+//        if (devemail != null) {
+//            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    switch (which) {
+//                        case DialogInterface.BUTTON_POSITIVE:
+//                            ObdGatewayService.saveLogcatToFile(getApplicationContext(), devemail);
+//                            break;
+//
+//                        case DialogInterface.BUTTON_NEGATIVE:
+//                            //No button clicked
+//                            break;
+//                    }
+//                }
+//            };
+//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//            builder.setMessage("Where there issues?\nThen please send us the logs.\nSend Logs?").setPositiveButton("Yes", dialogClickListener)
+//                    .setNegativeButton("No", dialogClickListener).show();
+//        }
 
         if (myCSVWriter != null) {
             myCSVWriter.closeLogCSVWriter();
@@ -541,27 +579,6 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
                 return build.create();
         }
         return null;
-    }
-
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem startItem = menu.findItem(START_LIVE_DATA);
-        MenuItem stopItem = menu.findItem(STOP_LIVE_DATA);
-        MenuItem settingsItem = menu.findItem(SETTINGS);
-        MenuItem getDTCItem = menu.findItem(GET_DTC);
-
-        if (service != null && service.isRunning()) {
-            getDTCItem.setEnabled(false);
-            startItem.setEnabled(false);
-            stopItem.setEnabled(true);
-            settingsItem.setEnabled(false);
-        } else {
-            getDTCItem.setEnabled(true);
-            stopItem.setEnabled(false);
-            startItem.setEnabled(true);
-            settingsItem.setEnabled(true);
-        }
-
-        return true;
     }
 
     private void addTableRow(String id, String key, String val) {
