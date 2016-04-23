@@ -16,8 +16,7 @@ public class FileUploadUtil {
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
         params.put("file", file);
-        client.post(url, params, new AsyncHttpResponseHandler()
-        {
+        client.post(url, params, new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, byte[] responseBody) {
