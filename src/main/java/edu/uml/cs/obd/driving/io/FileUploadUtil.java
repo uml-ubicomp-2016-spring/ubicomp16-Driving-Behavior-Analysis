@@ -23,7 +23,7 @@ public class FileUploadUtil {
      * @param RequestURL  请求的rul
      * @return  返回响应的内容
      */
-    public static String uploadFile(File file,String RequestURL)
+    public static String uploadFile(File file, String RequestURL)
     {
         String result = null;
         String  BOUNDARY =  UUID.randomUUID().toString();  //边界标识   随机生成

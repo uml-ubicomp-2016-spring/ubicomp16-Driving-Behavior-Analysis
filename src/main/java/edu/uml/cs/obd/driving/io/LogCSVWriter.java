@@ -39,7 +39,7 @@ public class LogCSVWriter {
 
         File sdCard = Environment.getExternalStorageDirectory();
         File dir = new File(sdCard.getAbsolutePath() + File.separator + dirname);
-        if (dir.mkdirs()) {
+        if (dir.exists() || dir.mkdirs()) {
             Log.d(TAG, "Path is " + sdCard.getAbsolutePath() + File.separator + dirname);
             File file = new File(dir, filename);
             FileOutputStream fos = new FileOutputStream(file);

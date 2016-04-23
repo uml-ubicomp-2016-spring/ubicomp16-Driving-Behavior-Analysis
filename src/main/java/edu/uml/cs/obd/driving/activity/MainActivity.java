@@ -95,7 +95,7 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
     private static final int SAVE_TRIP_NOT_AVAILABLE = 11;
     private static final int REQUEST_ENABLE_BT = 1234;
     private static boolean bluetoothDefaultIsEnable = false;
-    private File CSVFile = null;
+    private File CSVFile;
 
     static {
         RoboGuice.setUseAnnotationDatabases(false);
@@ -420,17 +420,17 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
 
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        if (CSVFile.exists()) {
+                        if (CSVFile != null && CSVFile.exists()) {
                             // upload file
                             String serverUrl = prefs.getString(ConfigActivity.UPLOAD_URL_KEY, null);
                             String rst = FileUploadUtil.uploadFile(CSVFile, serverUrl);
                             // show result
                             // TODO: 4/18/16 need to test.
-                            String msg = CSVFile + "has been uploaded." + rst;
+                            String msg = CSVFile + " has been uploaded.";
                             Toast toast = Toast.makeText(context, msg, duration);
                             toast.show();
                         } else {
-                            String msg = "No file to upload.";
+                            String msg = "No file to upload, please start live data first.";
                             Toast toast = Toast.makeText(context, msg, duration);
                             toast.show();
                         }
