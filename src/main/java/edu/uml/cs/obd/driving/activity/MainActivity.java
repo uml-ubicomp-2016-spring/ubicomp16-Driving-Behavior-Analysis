@@ -416,23 +416,28 @@ public class MainActivity extends RoboActivity implements ObdProgressListener, L
             public void onClick(DialogInterface dialog, int which) {
 
                 Context context = getApplicationContext();
-                int duration = Toast.LENGTH_LONG;
 
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         if (CSVFile != null && CSVFile.exists()) {
                             // upload file
-                            String serverUrl = prefs.getString(ConfigActivity.UPLOAD_URL_KEY, null);
-                            String rst = FileUploadUtil.uploadFile(CSVFile, serverUrl);
-                            // show result
-                            // TODO: 4/18/16 need to test.
-                            String msg = CSVFile + " has been uploaded.";
-                            Toast toast = Toast.makeText(context, msg, duration);
-                            toast.show();
+                            String serverUrl = prefs.getString(ConfigActivity.UPLOAD_URL_KEY,
+                                    "http://weblab.cs.uml.edu/~zlu/DrivingBA/Server/uploadfile.php");
+                            FileUploadUtil fileUploadUtil = new FileUploadUtil();
+                            try {
+                                String uploadResult = fileUploadUtil.uploadFile(CSVFile, serverUrl);
+                                if (uploadResult.equals("success")) {
+                                    String msg = CSVFile + " has been uploaded.";
+                                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(context, "File upload failed.", Toast.LENGTH_LONG).show();
+                                }
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            }
                         } else {
                             String msg = "No file to upload, please start live data first.";
-                            Toast toast = Toast.makeText(context, msg, duration);
-                            toast.show();
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
                         }
                         break;
 
