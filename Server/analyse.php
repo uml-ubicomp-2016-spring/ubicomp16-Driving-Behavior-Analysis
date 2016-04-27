@@ -309,23 +309,35 @@
 	}
 ?>
 
+
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Driving Behavior Analysis</title>
-    <style>
-      html, body, #map-canvas {
+	
+	<style>
+      #map-canvas {
         height: 800px;
-		width: 1400px
+		width: 75%
       }
     </style>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+
+    <meta name="description" content="Source code generated using layoutit.com">
+    <meta name="author" content="LayoutIt!">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+	
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
     <script>
     function initialize() {
     var mapOptions = {
-    zoom: 12,
+    zoom: 13,
     center: new google.maps.LatLng(<?php echo $goods_list[$totalCounter/2][$LATITUDE]; ?>,<?php echo $goods_list[$totalCounter/2][$LONGITUDE];?>),
     mapTypeId: google.maps.MapTypeId.TERRAIN
     };
@@ -359,19 +371,28 @@
 		
 		for($i=0; $i<count($fullStopCoList); $i++)
 		{
-			echo "var flightPlanCoordinatesFullStop".$i." = [
-				new google.maps.LatLng(".$fullStopCoList[$i][0][$LATITUDE].", ".$fullStopCoList[$i][0][$LONGITUDE]."),
-				new google.maps.LatLng(".$fullStopCoList[$i][1][$LATITUDE].", ".$fullStopCoList[$i][1][$LONGITUDE]."),
-				];";
+			//echo "var flightPlanCoordinatesFullStop".$i." = [
+			//	new google.maps.LatLng(".$fullStopCoList[$i][0][$LATITUDE].", ".$fullStopCoList[$i][0][$LONGITUDE]."),
+			//	new google.maps.LatLng(".$fullStopCoList[$i][1][$LATITUDE].", ".$fullStopCoList[$i][1][$LONGITUDE]."),
+			//	];";
 				
-			echo "var flightPathFullStop".$i." = new google.maps.Polyline({
-				path: flightPlanCoordinatesFullStop".$i.",
-				geodesic: true,
-				strokeColor: '#FF0000',
-				strokeOpacity: 1.0,
-				strokeWeight: 5
-				});
-				flightPathFullStop".$i.".setMap(map);";
+			//echo "var flightPathFullStop".$i." = new google.maps.Polyline({
+			//	path: flightPlanCoordinatesFullStop".$i.",
+			//	geodesic: true,
+			//	strokeColor: '#FF0000',
+			//	strokeOpacity: 1.0,
+			//	strokeWeight: 10
+			//	});
+			//	flightPathFullStop".$i.".setMap(map);";
+			
+			echo "var myLatlng = new google.maps.LatLng(".$fullStopCoList[$i][1][$LATITUDE].", ".$fullStopCoList[$i][1][$LONGITUDE].");";
+			
+			echo "var marker = new google.maps.Marker({
+				position: myLatlng,
+				map: map,
+				title: \"FullStop\"
+			});";
+				
 		}
 	?>
 	
@@ -389,9 +410,9 @@
 			echo "var flightPathHardBreak".$i." = new google.maps.Polyline({
 				path: flightPlanCoordinatesHardBreak".$i.",
 				geodesic: true,
-				strokeColor: '#ffff00',
+				strokeColor: '#CD950C',
 				strokeOpacity: 1.0,
-				strokeWeight: 4
+				strokeWeight: 7
 				});
 				flightPathHardBreak".$i.".setMap(map);";
 		}
@@ -413,55 +434,51 @@
 				geodesic: true,
 				strokeColor: '#00cc66',
 				strokeOpacity: 1.0,
-				strokeWeight: 3
+				strokeWeight: 7
 				});
 				flightPathOverAc".$i.".setMap(map);";
 		}
 	?>
-	
-	
 	}
     google.maps.event.addDomListener(window, 'load', initialize);
     </script>
-    </head>
-    <body>
-        <div id="map-canvas"></div>
-		<div>
-		<?php
-			echo "Driving duration: ".$maxDrivingDuration."<br>";
-			echo "Max Speed: ".$max_speed."mph<br>";
-			echo "full stop count: ".$fullStopCounter."<br>";
-			echo "Hard break count: ".$hardBreakCounter."<br>";
-			echo "Over acceleration count: ".$overAccelCounter."<br>";
+
+  </head>
+  <body>
+
+    <div class="container-fluid">
+		<div class="row">
+			<div class="col-md-9" id="map-canvas">
+			</div>
+			<div class="col-md-3">
+				<dl>
+					<dt>
+						Driving duration : <?php echo $maxDrivingDuration; ?>
+					</dt>
+
+					<dt>
+						Max speed : <?php echo $max_speed."mph";?>
+					</dt>
+
+					<dt>
+						Full stop count : <?php echo $fullStopCounter;?>
+					</dt>
+					<dt>
+						<font color='#CD950C'>Hard break count : </font> <?php echo $hardBreakCounter;?>
+					</dt>
+					
+					<dt>
+						<font color='#00cc66'>Exhibition of Speed count : </font> <?php echo $overAccelCounter;?>
+					</dt>
+				
+				</dl>
 			
-			//for debug
-			//for($i=0; $i<count($fullStopCoList); $i++)
-			//{
-			//	echo $fullStopCoList[$i][0][$LATITUDE].", ".$fullStopCoList[$i][0][$LONGITUDE].";"
-			//	.$fullStopCoList[$i][1][$LATITUDE].", ".$fullStopCoList[$i][1][$LONGITUDE]."<br>";
-			//}
-			
-			//for($i=0; $i<count($hardBreakCoList); $i++)
-			//{
-			//	for($j=0; $j<count($hardBreakCoList[$i]); $j++)
-			//	{
-			//		echo $hardBreakCoList[$i][$j][$LATITUDE].",".$hardBreakCoList[$i][$j][$LONGITUDE].";";
-			//	}
-			//	echo "<br>";
-			//}
-			
-			//for($i=0; $i<count($overAccelCoList); $i++)
-			//{
-			//	for($j=0; $j<count($overAccelCoList[$i]); $j++)
-			//	{
-			//		echo $overAccelCoList[$i][$j][$LATITUDE].",".$overAccelCoList[$i][$j][$LONGITUDE].";";
-			//	}
-			//	echo "<br>";
-			//}
-			
-		?>
+			</div>
 		</div>
-    </body>
+	</div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/scripts.js"></script>
+  </body>
 </html>
-
-
