@@ -461,6 +461,10 @@
 			<div class="col-md-3">
 				<dl>
 					<dt>
+						Driving Score : <?php echo 100 - ($hardBreakCounter * 2); ?>
+					</dt>
+
+					<dt>
 						Driving duration : <?php echo $maxDrivingDuration; ?>
 					</dt>
 
