@@ -321,8 +321,15 @@
     <title>Driving Behavior Analysis</title>
 	
 	<style>
+	  body {
+      	margin: 0;
+      	padding: 0 20px;
+      }
+      .header {
+      	text-align: center;
+      }
       #map-canvas {
-        height: 800px;
+        height: 700px;
 		width: 75%
       }
     </style>
@@ -447,6 +454,7 @@
   <body>
 
     <div class="container-fluid">
+    	<div class="header"><h2>Driving Behavior Report</h2></div>
 		<div class="row">
 			<div class="col-md-9" id="map-canvas">
 			</div>
@@ -475,6 +483,7 @@
 			
 			</div>
 		</div>
+		<br>
 	</div>
 
     <script src="js/jquery.min.js"></script>
