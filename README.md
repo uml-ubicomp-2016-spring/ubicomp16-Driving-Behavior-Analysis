@@ -49,3 +49,10 @@ Debug the app(log file and aupload issue)
 Server part:
 Mark full stop point on the rout
 Add filter function
+
+# Progress (Week 4/30)
+
+Server part:
+Add scoring system
+Add Unite detection function
+Fixed sime bugs
