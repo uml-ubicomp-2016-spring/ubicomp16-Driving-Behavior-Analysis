@@ -1,5 +1,4 @@
 <?php
-
 	//Counters
 	$overSpeedCounter = 0;
 	$overAccelCounter = 0;
@@ -26,8 +25,8 @@
 	$OVER_DECREASE = 5;
 	
 	//Boundary, this value should be get from the experiment
-	$AcceMax = 5;
-	$BreakMax = 5;
+	$AcceMax = 25;
+	$BreakMax = 28;
 	
 	//Fule comsumption
 	$maxFuleComsmption = 0;
@@ -42,6 +41,9 @@
 	//read all files
 	$dir="./upload/"; 
 	
+	//unit check
+	$UnitLength = 0;
+	
 	$handle=opendir($dir."."); //PHP traversal files
 	$array_file = array(); //the array is used to store the files' names
 	while (false !== ($file = readdir($handle)))
@@ -52,7 +54,6 @@
 		}
 	}
 	closedir($handle);
-
 	//debug
 	//print_r($array_file);
 	
@@ -75,10 +76,22 @@
 			{
 				//debug
 				//echo implode(";", $data)."<br>";
-
+				
+				//Check unit
+				if($counter == 3)
+				{
+					if(substr($goods_list[0][$SPEED],count($goods_list[0][$SPEED])-4,3) == "mph")
+					{
+						$UnitLength = 3;
+					}
+					if(substr($goods_list[0][$SPEED],count($goods_list[0][$SPEED])-5,4) == "km/h")
+					{
+						$UnitLength = 4;
+					}
+				}
+				
 				$goods_list[] = $data;
-
-				$speed = substr($data[$SPEED],0, strlen($data[$SPEED])-3);
+				$speed = substr($data[$SPEED],0, strlen($data[$SPEED])-$UnitLength);
 				if($speed>$max_speed)
 					$max_speed = $speed;
 				//test
@@ -98,6 +111,10 @@
 	}
 	fclose($file);
 	
+	//echo $UnitLength;
+	//echo count($goods_list[0][$SPEED]);
+	//echo substr($goods_list[0][$SPEED],count($goods_list[0][$SPEED])-5, 4);
+	
 	//full stop detection
 	$buff0 = $goods_list[0];
 	$buff1 = $goods_list[0];
@@ -108,8 +125,8 @@
 		*/
 		if($i>0)
 		{
-			if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3)) == 0.00 
-			&& substr($goods_list[$i-1][$SPEED],0,count($goods_list[$i][$SPEED]-3)) > 0 )
+			if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength) == 0.00 
+			&& substr($goods_list[$i-1][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength) > 0 )
 			{
 				
 				$fullStopCounter = $fullStopCounter + 1;;
@@ -150,10 +167,10 @@
 		//	continue;
 		
 		//increase
-		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-			<substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3))
-			&&(substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3))-
-				substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3)))<$AcceMax)
+		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+			<substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength)
+			&&(substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength)-
+				substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength))<$AcceMax)
 		{
 			//add $overAccelCo to the $overAccelCoList then clean $overAccelCo;
 			if($flag == $OVER_DECREASE)
@@ -172,11 +189,11 @@
 		}
 		
 		//over increase
-		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-			<substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3)))
+		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+			<substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength))
 		{
-			if((substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3))-
-			substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3)))>$AcceMax && flag!=$OVER_INCREASE)
+			if((substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength)-
+			substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength))>$AcceMax && flag!=$OVER_INCREASE)
 			{
 				$overAccelCounter++;
 				
@@ -186,7 +203,6 @@
 					$hardBreakCoList[] = $hardBreakCo;
 					unset($hardBreakCo); 
 				}
-
 				//add Co to the $overAccelCo
 				if($goods_list[$i][$LATITUDE]==$goods_list[$i+1][$LATITUDE] && $goods_list[$i][$LONGITUDE]==$goods_list[$i+1][$LONGITUDE])
 				{
@@ -209,8 +225,8 @@
 				$flag = $OVER_INCREASE;
 			}
 			
-			if((substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3))-
-			substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3)))>$AcceMax && flag==$OVER_INCREASE)
+			if((substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength)-
+			substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength))>$AcceMax && flag==$OVER_INCREASE)
 			{
 				//add Co to the $overAccelCo
 				$overAccelCo[] = $goods_list[$i+1];
@@ -218,10 +234,10 @@
 		}
 		
 		//decrease
-		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-			>substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3))
-			&&(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3)))<$BreakMax)
+		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+			>substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength)
+			&&(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength))<$BreakMax)
 		{
 		
 			//add $hardBreakCo to the $hardBreakCoList then clean $hardBreakCo;
@@ -242,11 +258,11 @@
 		}
 		
 		//over decrease
-		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-			>substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3)))
+		if(substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+			>substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength))
 		{
-			if((substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3)))>$BreakMax && flag!=$OVER_DECREASE)
+			if((substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength))>$BreakMax && flag!=$OVER_DECREASE)
 			{
 				
 				$hardBreakCounter++;;
@@ -278,8 +294,8 @@
 				
 				$flag = $OVER_DECREASE;
 			}
-			if((substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED]-3))
-				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED]-3)))>$BreakMax && flag==$OVER_DECREASE)
+			if((substr($goods_list[$i][$SPEED],0,count($goods_list[$i][$SPEED])-$UnitLength)
+				-substr($goods_list[$i+1][$SPEED],0,count($goods_list[$i+1][$SPEED])-$UnitLength))>$BreakMax && flag==$OVER_DECREASE)
 			{
 				//add Co to the $hardBreakCo
 				$hardBreakCo[] = $goods_list[$i+1];
@@ -332,6 +348,10 @@
         height: 700px;
 		width: 75%
       }
+	  .row dt {
+		  font-size: 1.5em;
+		  line-height: 50px;
+	  }
     </style>
 
     <meta name="description" content="Source code generated using layoutit.com">
@@ -348,11 +368,8 @@
     center: new google.maps.LatLng(<?php echo $goods_list[$totalCounter/2][$LATITUDE]; ?>,<?php echo $goods_list[$totalCounter/2][$LONGITUDE];?>),
     mapTypeId: google.maps.MapTypeId.TERRAIN
     };
-
-
     var map = new google.maps.Map(document.getElementById('map-canvas'),
       mapOptions);
-
     var flightPlanCoordinates = [
     <?php
 	foreach ($goods_list as $arr)
@@ -363,7 +380,6 @@
 	}
     ?>
     ];
-
     var flightPath = new google.maps.Polyline({
         path: flightPlanCoordinates,
         geodesic: true,
@@ -469,7 +485,14 @@
 					</dt>
 
 					<dt>
-						Max speed : <?php echo $max_speed."mph";?>
+						Max speed : 
+						<?php 
+							echo $max_speed;
+							if($UnitLength == 3)
+								echo "mph";
+							if($UnitLength == 4)
+								echo "km/h";
+						?>
 					</dt>
 
 					<dt>
