@@ -8,10 +8,14 @@ This system will collect data from vehicle and human’s behaviors by using OBD2
 * [@Yufeng Yuan](https://github.com/FrankeyYuan)
 
 # Adviser
-* [@Prof. Chen](https://github.com/gchenhub)
+* [@Guanling Chen](https://github.com/gchenhub)
 
 # Video Demo
-[Driving Behvior Analysis Demo](https://youtu.be/IDerP381ssE)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=IDerP381ssE
+" target="_blank"><img src="http://img.youtube.com/vi/IDerP381ssE/0.jpg" 
+alt="Driving Behvior Analysis Demo" width="480" height="360" border="10" /></a>
+
+[Driving Behvior Analysis Demo Link](https://youtu.be/IDerP381ssE)
 
 # Interface and Report
 <img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/Screenshot_20160422-223345.png?raw=true" alt="Interface1" width="150" height="260">
