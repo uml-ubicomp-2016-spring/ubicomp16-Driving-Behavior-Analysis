@@ -2,7 +2,8 @@
 This system will collect data from vehicle and human’s behaviors by using OBD2 and Google Map to analyze if the driver drives the auto appropriately. Like fully stop, appropriate turning speed. If the driver is too tension, or the acceleration is too rapid, Then it will gives a report to user about their driving behaviors, and which part of driving behavior should be corrected.
 
 # Video Demo
-[https://youtu.be/IDerP381ssE](https://youtu.be/IDerP381ssE)
+[Driving Behaving Demo](https://youtu.be/IDerP381ssE)
+
 
 # Contributors
 * [@Cheng Zhang](https://github.com/zhangchengx)
