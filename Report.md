@@ -78,7 +78,8 @@ Summarization of the paper basic idea as follows,
 > 4. Determine whether the current driving behavior belongs to safe driving or not.
 
 As you can see, it is a general classification algorithm based on mechine learning method. 
-Obviously, it has several points are not perfect.
+
+Obviously, it has several issues are not perfect.
 
 > 1. It needs a lot of data set for training.
 > 2. No 100% accurateness.
