@@ -73,18 +73,18 @@ Here is a paper that has similar goals with our app:
 Summarization of the paper basic idea as follows,
 
 > 1. Collect good driving data and bad driving data as training set.
-> 2. Using of AdaBoost algorithms to create a driving behavior classification model.
+> 2. Using AdaBoost algorithms to create a driving behavior classification model.
 > 3. Import driving data which is collected from OBD reader.
 > 4. Determine whether the current driving behavior belongs to safe driving or not.
 
-As you can see, this is a general classification algorithm based on mechine learning method. 
+As you can see, it is a general classification algorithm based on mechine learning method. 
 Obviously, it has several points are not perfect.
 
-> 1. It need a lot of data set for training.
+> 1. It needs a lot of data set for training.
 > 2. No 100% accurateness.
 > 3. Need a lot computing cost.
 
-Anyway, the good news is, all of issues listed above have been solved by our app. 
+Anyway, the good news is, all of the issues listed above have been solved by our app. 
 The app can reach 100% accurateness, no training data needed, and less computing cost, 
 even moving computing part into smartphone inside, the mobile CPU is able to 100% handle it.
 
