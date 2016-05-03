@@ -20,6 +20,7 @@ After analyzing the data, the system will give a report about their driving beha
 	* Collection position data(Latitude, Longtitud)
 	* Upload data(upload data files to the server)
 	* Driving behaviors report.
+
 ## Data Collection
 
 * OBD2
@@ -67,15 +68,6 @@ _main source code is stored in src/main/java/edu/uml/cs/obd/driving/_
 ## Project Evaluation
 
 
-## Video Demo
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=IDerP381ssE
-" target="_blank"><img src="http://img.youtube.com/vi/IDerP381ssE/0.jpg" 
-alt="Driving Behvior Analysis Demo" width="480" height="360" border="10" /></a>
-
-## Interface and Report
-<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/image/Screenshot_20160422-223345.png?raw=true" alt="Interface1" width="150" height="260">
-<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/image/thumb_IMG_1855_1024.jpg?raw=true" alt="Interface1" width="150" height="260">
-<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/image/Screenshot%202016-05-01%2001.06.01.png" alt="Interface1" width="480" height="260">
 
 ## Reference
 > [1] http://blog.lemberg.co.uk/how-guide-obdii-reader-app-development
