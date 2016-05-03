@@ -19,7 +19,7 @@ After analyzing the data, the system will give a report about their driving beha
 The system structure of the project is show as Figure 1.  The OBD2 device will connect with the user’s car and collect data all information about the car, such as speed and engine information. The smartphone will connect the OBD2 by bluetooth, and the application will keep receiving the data about the car. Meanwhile, the application will also collect the data from the smartphone, such as position and direction, etc. After
 collecting all data both from OBD2 and smartphone, the app will send the data to our web server. The web server will receive the data and start analyzing. Finally, the web server will give a report to user for helping drivers understand their driving behaviors.
 <!--<div style="text-align:center" markdown="1">-->
-<img style="text-align:center" src="Screenshot 2016-05-02 19.23.22.png">
+<img style="text-align:center" src="/image/Screenshot 2016-05-02 19.23.22.png">
 <!--![a](Screenshot 2016-05-02 19.23.22.png)-->
 Figure1: System strcture
 <!--Figure1: system structure: - center-->
