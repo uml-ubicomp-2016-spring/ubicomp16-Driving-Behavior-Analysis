@@ -13,14 +13,14 @@ This system will collect data from vehicle and human’s behaviors by using OBD2
 # Video Demo
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=IDerP381ssE
 " target="_blank"><img src="http://img.youtube.com/vi/IDerP381ssE/0.jpg" 
-alt="Driving Behvior Analysis Demo" width="480" height="360" border="10" /></a>
+alt="/image/Driving Behvior Analysis Demo" width="480" height="360" border="10" /></a>
 
 [Driving Behvior Analysis Demo Link](https://youtu.be/IDerP381ssE)
 
 # Interface and Report
 <img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/Screenshot_20160422-223345.png?raw=true" alt="Interface1" width="150" height="260">
-<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/thumb_IMG_1855_1024.jpg?raw=true" alt="Interface1" width="150" height="260">
-<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/Screenshot%202016-05-01%2001.06.01.png" alt="Interface1" width="480" height="260">
+<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/image/thumb_IMG_1855_1024.jpg?raw=true" alt="Interface1" width="150" height="260">
+<img src="https://github.com/uml-ubicomp-2016-spring/ubicomp16-Driving-Behavior-Analysis/blob/master/image/Screenshot%202016-05-01%2001.06.01.png" alt="Interface1" width="480" height="260">
 
 # Weekly Progress
 ## Progress (Week 3/28)
